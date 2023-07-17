@@ -1,8 +1,15 @@
 package mye
 
-import "errors"
+import (
+	"errors"
+)
 
-type ErrorType int
+type (
+	ErrorType     int
+	ErrorTypeCode struct {
+		http int
+	}
+)
 
 const (
 	Cancelation ErrorType = iota
@@ -20,7 +27,7 @@ var (
 )
 
 func (et ErrorType) New(msg string) error {
-	return Err{t: et, err: errors.New(msg)}
+	return Err{T: et, err: errors.New(msg)}
 }
 
 func (et ErrorType) isAlertable() bool {

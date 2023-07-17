@@ -1,11 +1,12 @@
 package mye
 
 import (
+	"errors"
 	"fmt"
 )
 
 type Err struct {
-	t   ErrorType
+	T   ErrorType
 	err error
 }
 
@@ -15,7 +16,7 @@ func (e Err) Error() string {
 
 func IsLoggeable(err error) bool {
 	if local, ok := err.(Err); ok {
-		return local.t.isLoggeable()
+		return local.T.isLoggeable()
 	}
 
 	return true
@@ -23,7 +24,7 @@ func IsLoggeable(err error) bool {
 
 func IsAlertable(err error) bool {
 	if local, ok := err.(Err); ok {
-		return local.t.isAlertable()
+		return local.T.isAlertable()
 	}
 
 	return true
@@ -36,4 +37,12 @@ func Wrap(err error, msg string) error {
 func Wrapf(err error, format string, obs ...any) error {
 	msg := fmt.Sprintf(format, obs...)
 	return Wrap(err, msg)
+}
+
+func UnWrap(err error) error {
+	if unwraped := errors.Unwrap(err); unwraped != nil {
+		UnWrap(unwraped)
+	}
+
+	return err
 }
