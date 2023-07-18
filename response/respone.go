@@ -13,8 +13,9 @@ type (
 	ErrorTypeCode    struct {
 		http int
 	}
-	errResponse struct {
-		Error string `json:"Error" xml:"Error"`
+	ErrResponse struct {
+		XMLName xml.Name `xml:"response"`
+		Error   string   `json:"Error" xml:"Error"`
 	}
 )
 
@@ -29,7 +30,7 @@ const (
 )
 
 var (
-	codeCatalog = map[mye.ErrorType]ErrorTypeCode{
+	errCode = map[mye.ErrorType]ErrorTypeCode{
 		mye.Cancelation:  {http.StatusInternalServerError},
 		mye.Forbiden:     {http.StatusForbidden},
 		mye.Internal:     {http.StatusInternalServerError},
@@ -40,17 +41,17 @@ var (
 	}
 )
 
-func adadsd(err error) (int, string) {
+func statusContent(err error) (int, string) {
 	uErr := mye.UnWrap(err)
 	if local, ok := err.(mye.Err); ok {
-		return codeCatalog[local.T].http, uErr.Error()
+		return errCode[local.T].http, uErr.Error()
 	}
 
 	return 500, uErr.Error()
 }
 
 func Http(err error, w http.ResponseWriter, content []byte) error {
-	status, _ := adadsd(err)
+	status, _ := statusContent(err)
 	w.WriteHeader(status)
 	_, err = w.Write(content)
 
@@ -58,8 +59,8 @@ func Http(err error, w http.ResponseWriter, content []byte) error {
 }
 
 func HttpJSON(err error, w http.ResponseWriter) error {
-	status, msg := adadsd(err)
-	errResponse := errResponse{msg}
+	status, msg := statusContent(err)
+	errResponse := ErrResponse{Error: msg}
 
 	w.Header().Set(HeaderContentType, string(MIMEApplicationJSONCharsetUTF8))
 	w.WriteHeader(status)
@@ -69,8 +70,8 @@ func HttpJSON(err error, w http.ResponseWriter) error {
 }
 
 func HttpXml(err error, w http.ResponseWriter) error {
-	status, msg := adadsd(err)
-	errResponse := errResponse{msg}
+	status, msg := statusContent(err)
+	errResponse := ErrResponse{Error: msg}
 
 	w.Header().Set(HeaderContentType, string(MIMEApplicationXMLCharsetUTF8))
 	w.WriteHeader(status)
@@ -84,8 +85,8 @@ type JSONSerializer interface {
 }
 
 func Echo(err error, ctx JSONSerializer) error {
-	status, msg := adadsd(err)
-	errResponse := errResponse{msg}
+	status, msg := statusContent(err)
+	errResponse := ErrResponse{Error: msg}
 
 	return ctx.JSON(status, errResponse)
 }
